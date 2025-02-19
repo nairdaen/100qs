@@ -1,5 +1,6 @@
 let pastQuestions = [];
 let currentQuestion;
+let failedQuestions = [];
 injectStartButton(true);
 
 function injectStartButton(firstTime) {
@@ -19,6 +20,9 @@ function start() {
   displayQuestion(currentQuestion);
   let elem = document.getElementById("left");
   elem.textContent=99;
+
+  document.getElementById("summary_text").style.display = "none";
+  displayContent(createParagraph(""), "summary");
 }
 
 function toggleAnswer() {
@@ -33,6 +37,12 @@ function toggleAnswer() {
 function displayNextCard(wasPreviousResponseCorrect) {
   updateCounters(wasPreviousResponseCorrect);
   pastQuestions.push(currentQuestion);
+
+  // If question was not correct, add it to list of failed questions
+  if (wasPreviousResponseCorrect === false) {
+    failedQuestions.push(currentQuestion);
+  }
+
   // If no more cards left, reset game and show "restart" button.
   if (questions.length === 0) {
     // clear state
@@ -42,6 +52,16 @@ function displayNextCard(wasPreviousResponseCorrect) {
     // - hide answer and buttons.
     document.getElementById("buttons").style.display = "none";
     document.getElementById("answer").style.display = "none";
+    document.getElementById("summary_text").style.display = "grid";
+
+    // show all failed questions and their answers
+    for (let i = 0; i < failedQuestions.length; i++) {
+      let question = failedQuestions[i];
+      
+      displayContent(createQuestionAndAnswer(question[2], question[3]), "summary", false);
+    }
+    failedQuestions = [];
+
     // put Restart button.
     injectStartButton(false);
   } else {
@@ -83,9 +103,9 @@ function displayQuestion(question) {
   document.getElementById("answer").style.display = "none";
 }
 
-function displayContent(content, elementTag) {
+function displayContent(content, elementTag, removeChildren=true) {
   let container = document.getElementById(elementTag);
-  while (container.firstChild) {
+  while (container.firstChild && removeChildren) {
     container.removeChild(container.firstChild);
   }
   container.appendChild(content);
@@ -95,7 +115,6 @@ function createParagraph(content) {
   let p = document.createElement('p');
   p.textContent = content;
   return p;
-
 }
 
 function createBulletList(array) {
@@ -106,6 +125,13 @@ function createBulletList(array) {
     list.appendChild(item);
   }
   return list;
+}
+
+function createQuestionAndAnswer(question, answers) {
+  let li = document.createElement('li');
+  li.appendChild(createParagraph(question));
+  li.appendChild(createBulletList(answers));
+  return li;
 }
 
 function shuffleArray(array) {
